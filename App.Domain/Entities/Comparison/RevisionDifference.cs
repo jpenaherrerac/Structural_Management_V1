@@ -4,6 +4,9 @@ namespace App.Domain.Entities.Comparison
 {
     public class RevisionDifference
     {
+        /// <summary>A change is flagged as significant when it exceeds this percentage threshold.</summary>
+        private const double SignificanceThresholdPercent = 5.0;
+
         public Guid Id { get; private set; }
         public string Category { get; private set; }
         public string ElementId { get; private set; }
@@ -28,7 +31,7 @@ namespace App.Domain.Entities.Comparison
             if (double.TryParse(baseValue, out double bv) && double.TryParse(comparedValue, out double cv) && bv != 0)
             {
                 PercentChange = (cv - bv) / Math.Abs(bv) * 100.0;
-                IsSignificant = Math.Abs(PercentChange) > 5.0;
+                IsSignificant = Math.Abs(PercentChange) > SignificanceThresholdPercent;
             }
         }
     }

@@ -11,6 +11,7 @@ namespace App.Application.Annexes
     {
         private const double PhiFlexure = 0.90;
         private const double PhiShear = 0.85;
+        private const double AssumedStirrupRadiusMm = 8.0;
 
         public BeamDesignReportRow Calculate(BeamDesignData data)
         {
@@ -19,7 +20,7 @@ namespace App.Application.Annexes
             double b = data.WidthMm;
             double h = data.DepthMm;
             double cover = data.CoverMm > 0 ? data.CoverMm : 40.0;
-            double d = h - cover - 8.0;   // effective depth (assume 8mm stirrup radius approx)
+            double d = h - cover - AssumedStirrupRadiusMm;
             double fc = data.Fc;           // MPa
             double fy = data.Fy;           // MPa
 

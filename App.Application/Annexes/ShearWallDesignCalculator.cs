@@ -11,34 +11,50 @@ namespace App.Application.Annexes
     {
         private const double PhiFlexure = 0.90;
         private const double PhiShear = 0.75;
+        /// <summary>ACI 318 §11.5.4: minimum horizontal reinforcement ratio for walls.</summary>
+        private const double MinHorizontalReinforcement = 0.0025;
+        /// <summary>ACI 318 §11.5.4: minimum vertical reinforcement ratio for walls.</summary>
+        private const double MinVerticalReinforcement = 0.0025;
+        /// <summary>ACI 318 Table 11.5.4.3: αc for slender walls (hw/lw ≥ 2).</summary>
+        private const double AlphaCSlender = 0.17;
+        /// <summary>ACI 318 Table 11.5.4.3: αc for squat walls (hw/lw ≤ 1.5).</summary>
+        private const double AlphaCSquat = 0.25;
+        private const double SlenderAspectRatio = 2.0;
+        private const double SquatAspectRatio = 1.5;
 
         public ShearWallDesignReportRow Calculate(WallDesignData data, double rhoHorizontal = 0.0025, double rhoVertical = 0.0025)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
 
-            double lw = data.LengthMeters * 1000.0;  // mm
-            double tw = data.ThicknessMm;              // mm
-            double hw = data.HeightMeters * 1000.0;   // mm
+            double lw = data.LengthMeters * 1000.0;
+            double tw = data.ThicknessMm;
+            double hw = data.HeightMeters * 1000.0;
             double cover = data.CoverMm > 0 ? data.CoverMm : 25.0;
             double fc = data.Fc;
             double fy = data.Fy;
             double Acv = lw * tw;
 
-            double rhoHMin = 0.0025;
-            double rhoVMin = 0.0025;
-            double rhoH = Math.Max(rhoHorizontal, rhoHMin);
-            double rhoV = Math.Max(rhoVertical, rhoVMin);
+            double rhoH = Math.Max(rhoHorizontal, MinHorizontalReinforcement);
+            double rhoV = Math.Max(rhoVertical, MinVerticalReinforcement);
 
-            double Mu = data.MuKNm * 1e6;           // N-mm
-            double Pu = data.PuKN * 1000.0;          // N
+            double Mu = data.MuKNm * 1e6;
+            double Pu = data.PuKN * 1000.0;
 
             double As = rhoV * lw * tw;
             double a = As * fy / (0.85 * fc * tw);
             double Mn = As * fy * (lw / 2.0 - a / 2.0) + Pu * lw / 2.0;
-            double phiMn = PhiFlexure * Mn / 1e6;     // kN-m
+            double phiMn = PhiFlexure * Mn / 1e6;
 
             double Vu = data.VuKN * 1000.0;
-            double alphaC = (hw / lw <= 1.5) ? 0.25 : (hw / lw >= 2.0) ? 0.17 : 0.17 + (2.0 - hw / lw) * (0.25 - 0.17) / 0.5;
+            double aspectRatio = hw / lw;
+            double alphaC;
+            if (aspectRatio <= SquatAspectRatio)
+                alphaC = AlphaCSquat;
+            else if (aspectRatio >= SlenderAspectRatio)
+                alphaC = AlphaCSlender;
+            else
+                alphaC = AlphaCSlender + (SlenderAspectRatio - aspectRatio) / (SlenderAspectRatio - SquatAspectRatio) * (AlphaCSquat - AlphaCSlender);
+
             double Vc = alphaC * Math.Sqrt(fc) * Acv;
             double Vs = rhoH * Acv * fy;
             double Vn = Math.Min(Vc + Vs, 0.66 * Math.Sqrt(fc) * Acv);

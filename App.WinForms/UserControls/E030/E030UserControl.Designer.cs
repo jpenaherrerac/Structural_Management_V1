@@ -67,7 +67,7 @@ namespace App.WinForms.UserControls.E030
             _cmbSoilType.Items.AddRange(new object[]
             {
                 "A — Roca (S=1.00)", "B — Roca blanda (S=1.20)",
-                "C — Suelo muy denso (S=1.11)", "D — Suelo blando (S=1.11)", "E — Suelo blando especial (S=1.30)"
+                "C — Suelo muy denso (S=1.11)", "D — Suelo blando (S=1.11 NEC / 1.35 E030)", "E — Suelo blando especial (S=1.30)"
             });
             _cmbSoilType.SelectedIndex = 3;
             _cmbSoilType.SelectedIndexChanged += CmbSoilType_SelectedIndexChanged;

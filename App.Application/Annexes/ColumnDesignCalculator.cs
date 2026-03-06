@@ -12,6 +12,10 @@ namespace App.Application.Annexes
     {
         private const double PhiCompression = 0.65;
         private const double PhiShear = 0.85;
+        /// <summary>ACI 318 β1 factor for fc ≤ 28 MPa.</summary>
+        private const double Beta1 = 0.85;
+        /// <summary>Steel strain at balanced failure (εs = εy, εcu = 0.003 → 600 MPa ratio in SI).</summary>
+        private const double BalancedStrainRatioMPa = 600.0;
 
         public ColumnDesignReportRow Calculate(ColumnDesignData data, double rhoProvided = 0.02)
         {
@@ -31,7 +35,7 @@ namespace App.Application.Annexes
             double Ast = rho * Ag;          // mm²
 
             double Po = 0.85 * fc * (Ag - Ast) + fy * Ast;
-            double Pn = 0.80 * Po;         // tied column
+            double Pn = 0.80 * Po;         // tied column (ACI 318 §22.4.2.1)
             double phiPn = PhiCompression * Pn;
 
             double mu = Math.Max(Math.Abs(data.Mu2KNm), Math.Abs(data.Mu3KNm));
@@ -99,7 +103,7 @@ namespace App.Application.Annexes
             double fy = data.Fy;
 
             double Po = (0.85 * fc * (Ag - Ast) + fy * Ast) / 1000.0;
-            double Pb = 0.85 * 0.85 * fc * b * h * 600 / (600 + fy) / 1000.0;
+            double Pb = Beta1 * Beta1 * fc * b * h * BalancedStrainRatioMPa / (BalancedStrainRatioMPa + fy) / 1000.0;
             double Mb = Pb * h * 0.4 / 1000.0;
 
             points.Add((PhiCompression * 0.80 * Po, 0));
