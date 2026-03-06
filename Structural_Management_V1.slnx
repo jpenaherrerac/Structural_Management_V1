@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/HELP_DOCS/" />
+  <Folder Name="/HELP_DOCS/Sismicidad-Parametros_sismicos/">
+    <File Path="D:/OneDrive - HMV Ingenieros Ltda/Software desarrollado para HMV/Nueva carpeta/E030.md" />
+    <File Path="D:/OneDrive - HMV Ingenieros Ltda/Software desarrollado para HMV/Nueva carpeta/E030TabManager.cs" />
+    <File Path="D:/OneDrive - HMV Ingenieros Ltda/Software desarrollado para HMV/Nueva carpeta/E030_Tablas.md" />
+    <File Path="D:/OneDrive - HMV Ingenieros Ltda/Software desarrollado para HMV/Nueva carpeta/ESPECTR_TapManager.cs" />
+    <File Path="D:/OneDrive - HMV Ingenieros Ltda/Software desarrollado para HMV/Nueva carpeta/Relaciones_entre_E030TabManager.cs_y_ESPECTR_TapManager .md" />
+  </Folder>
   <Project Path="App.Application/App.Application.csproj" />
   <Project Path="App.Domain/App.Domain.csproj" />
   <Project Path="App.Infrastructure/App.Infrastructure.csproj" />
