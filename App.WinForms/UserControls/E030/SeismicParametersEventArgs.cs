@@ -1,30 +1,33 @@
 using System;
+using System.Collections.Generic;
 
 namespace App.WinForms.UserControls.E030
 {
-    public class SeismicParameters
+    /// <summary>
+    /// Internal data structure for E030 seismic parameters per direction.
+    /// </summary>
+    public class EntradaE030
     {
-        public string Zone { get; set; }
-        public double Z { get; set; }
-        public string SoilType { get; set; }
-        public double S { get; set; }
-        public string UsageCategory { get; set; }
-        public double I { get; set; }
-        public double R { get; set; }
-        public double Ct { get; set; }
-        public double Alpha { get; set; }
-        public double Tp { get; set; }
-        public double Tl { get; set; }
-        public double Fa { get; set; }
-        public double Fd { get; set; }
-        public double Fs { get; set; }
-        public double BuildingHeight { get; set; }
-        public double ComputedPeriod { get; set; }
+        public ZonaSismica? Zona { get; set; }
+        public PerfilSuelo? Suelo { get; set; }
+        public double? Ct { get; set; }
+        public double? C { get; set; }
+        public double? T { get; set; }
+        public CategoriaEdificacion? Categoria { get; set; }
+        public double? U { get; set; }
+        public SistemaEstructural? Sistema { get; set; }
+        public double Ia { get; set; } = 1.0;
+        public double Ip { get; set; } = 1.0;
+        public double R0 { get; set; }
+        public double R => Ia * Ip * R0;
     }
 
+    /// <summary>
+    /// Event args carrying the current dictionary of seismic values.
+    /// </summary>
     public class SeismicParametersEventArgs : EventArgs
     {
-        public SeismicParameters Parameters { get; }
-        public SeismicParametersEventArgs(SeismicParameters parameters) => Parameters = parameters;
+        public IReadOnlyDictionary<string, double> Values { get; }
+        public SeismicParametersEventArgs(IReadOnlyDictionary<string, double> values) => Values = values;
     }
 }
