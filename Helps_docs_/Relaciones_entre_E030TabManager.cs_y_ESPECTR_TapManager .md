@@ -1,0 +1,4 @@
+ación principal
+•	E030TabManager (archivo UI\TABS\E030TabManager.cs) produce y mantiene los parámetros sísmicos (diccionario accesible via GetValoresActuales()) y dispara el evento ValoresActualesChanged cuando cambian.
+•	ESPECTR_TapManager (archivo UI\TABS\ESPECTR_TapManager.cs) recibe un Func<IReadOnlyDictionary<string,double>> (en MainForm le pasan ()=> _e030Manager?.GetValoresActuales()) y usa esos valores para construir la tabla y generar el espectro (Refresh() / RefreshSpectrum() / GenerarEspectroDesdeValores()).
+•	MainForm (archivo UI\MainForm.cs) conecta todo: crea E030TabManager, suscribe E030TabManager.ValoresActualesChanged para llamar _espectrManager?.Refresh() y construye ESPECTR_TapManager pasando el proveedor GetValoresActuales().
