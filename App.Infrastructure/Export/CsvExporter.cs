@@ -42,7 +42,7 @@ namespace App.Infrastructure.Export
                 if (!first) sb.Append(',');
                 first = false;
                 var val = cell ?? string.Empty;
-                if (val.Contains(',') || val.Contains('"') || val.Contains('\n'))
+                if (val.Contains(",") || val.Contains("\"") || val.Contains("\n"))
                     sb.Append('"').Append(val.Replace("\"", "\"\"")).Append('"');
                 else
                     sb.Append(val);

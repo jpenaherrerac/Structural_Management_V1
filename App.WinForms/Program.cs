@@ -4,6 +4,7 @@ using App.Application.Interfaces;
 using App.Application.UseCases;
 using App.Infrastructure.Repositories;
 using App.SAP2000.Adapters;
+using WinFormsApp = System.Windows.Forms.Application;
 
 namespace App.WinForms
 {
@@ -12,8 +13,8 @@ namespace App.WinForms
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            WinFormsApp.EnableVisualStyles();
+            WinFormsApp.SetCompatibleTextRenderingDefault(false);
 
             // Composition root: wire up dependencies
             IProjectRepository projectRepo = new ProjectRepository();
@@ -25,7 +26,7 @@ namespace App.WinForms
             var hydrateSeismicUseCase = new HydrateSeismicSourceUseCase(sapAdapter, seismicRepo, projectRepo);
             var hydrateDesignUseCase = new HydrateDesignSourceUseCase(sapAdapter, designRepo, projectRepo);
 
-            Application.Run(new MainForm(sapAdapter, createProjectUseCase, hydrateSeismicUseCase, hydrateDesignUseCase));
+            WinFormsApp.Run(new MainForm(sapAdapter, createProjectUseCase, hydrateSeismicUseCase, hydrateDesignUseCase));
         }
     }
 }
