@@ -156,9 +156,9 @@ namespace App.WinForms.UserControls.E030
 
         /// <summary>
         /// Computes C factor per E030 formula:
-        ///   T ≤ TP        → C = 2.5
-        ///   TP &lt; T ≤ TL   → C = 2.5 × TP / T
-        ///   T &gt; TL        → C = 2.5 × TP × TL / T²
+        ///   T ≤ TP       → C = 2.5
+        ///   TP < T ≤ TL  → C = 2.5 × TP / T
+        ///   T > TL       → C = 2.5 × TP × TL / T²
         /// </summary>
         public static double CalcularC(double T, double TP, double TL)
         {

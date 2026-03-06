@@ -21,7 +21,7 @@ namespace App.WinForms.UserControls.Espectro
         public double Sd { get; set; }
     }
 
-    public partial class EspectroUserControl : UserControl, IDisposable
+    public partial class EspectroUserControl : UserControl
     {
         private Func<IReadOnlyDictionary<string, double>>? _valProvider;
         private bool _built;
@@ -86,7 +86,7 @@ namespace App.WinForms.UserControls.Espectro
                 BackColor = Color.WhiteSmoke, ImageScalingSize = new Size(20, 20)
             };
 
-            var btnRefresh = new ToolStripButton("Refrescar Par");
+            var btnRefresh = new ToolStripButton("Refrescar Parámetros");
             btnRefresh.Click += (s, e) => { Refresh(); RefreshSpectrum(); };
             _toolbar.Items.Add(btnRefresh);
 
@@ -100,7 +100,7 @@ namespace App.WinForms.UserControls.Espectro
             };
             _toolbar.Items.Add(_btnToggleMode);
 
-            var btnCopy = new ToolStripButton("Copiar Par");
+            var btnCopy = new ToolStripButton("Copiar Parámetros");
             btnCopy.Click += (s, e) => CopyToClipboard();
             _toolbar.Items.Add(btnCopy);
 
