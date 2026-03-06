@@ -7,19 +7,18 @@ namespace App.WinForms.Forms.Seismicity
 {
     public partial class SeismicityForm : Form
     {
-        private TabControl _tabControl;
-        private E030UserControl _e030Control;
-        private EspectroUserControl _espectroControl;
+        private TabControl _tabControl = null!;
+        private E030UserControl _e030Control = null!;
+        private EspectroUserControl _espectroControl = null!;
 
         public SeismicityForm()
         {
             InitializeComponent();
         }
 
-        private void E030Control_ParametersChanged(object sender, SeismicParametersEventArgs e)
+        private void E030Control_ValoresActualesChanged(object sender, EventArgs e)
         {
-            // Propagate updated seismic parameters to the spectrum tab
-            _espectroControl.UpdateFromSeismicParameters(e.Parameters);
+            _espectroControl.Refresh();
         }
     }
 }
