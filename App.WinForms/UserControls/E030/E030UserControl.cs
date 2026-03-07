@@ -218,7 +218,6 @@ namespace App.WinForms.UserControls.E030
             _valores["TP"] = TP;
             _valores["TL"] = TL;
             _valores["C"] = _entrada.C ?? 0.0;
-            _valores["Ia"] = _entrada.Ia;
             _valores["R_x"] = _entrada.R;
             _valores["Ro_x"] = _entrada.R0;
             _valores["Ia_x"] = _entrada.Ia;
