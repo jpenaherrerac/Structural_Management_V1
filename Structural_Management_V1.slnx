@@ -1,10 +1,11 @@
 <Solution>
-  <Folder Name="/Helps_docs_/">
-    <File Path="Helps_docs_/E030.md" />
-    <File Path="Helps_docs_/E030TabManager.cs" />
-    <File Path="Helps_docs_/E030_Tablas.md" />
-    <File Path="Helps_docs_/ESPECTR_TapManager.cs" />
-    <File Path="Helps_docs_/Relaciones_entre_E030TabManager.cs_y_ESPECTR_TapManager .md" />
+  <Folder Name="/Helps_docs_/" />
+  <Folder Name="/Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/">
+    <File Path="Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/E030.md" />
+    <File Path="Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/E030TabManager.cs" />
+    <File Path="Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/E030_Tablas.md" />
+    <File Path="Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/ESPECTR_TapManager.cs" />
+    <File Path="Helps_docs_/E030TabManager.cs_y_ESPECTR_TapManager/Relaciones_entre_E030TabManager.cs_y_ESPECTR_TapManager .md" />
   </Folder>
   <Project Path="App.Application/App.Application.csproj" />
   <Project Path="App.Domain/App.Domain.csproj" />
