@@ -21,11 +21,32 @@ namespace App.WinForms.UserControls.Espectro
         public double Sd { get; set; }
     }
 
+    /// <summary>
+    /// Display unit system for spectrum values.
+    /// </summary>
+    public enum UnidadDisplay
+    {
+        /// <summary>Sa in cm/s², Sv in cm/s, Sd in cm (default).</summary>
+        Cm,
+        /// <summary>Sa in m/s², Sv in m/s, Sd in m.</summary>
+        M,
+        /// <summary>Sa as fraction of g (9.81 m/s²), Sv in m/s, Sd in m.</summary>
+        G
+    }
+
     public partial class EspectroUserControl : UserControl
     {
+        // ── Conversion constants ─────────────────────────────────────────────
+        private const double CmToM = 100.0;
+        private const double CmS2ToG = 981.0;
+
         private Func<IReadOnlyDictionary<string, double>>? _valProvider;
         private bool _built;
         private bool _pivotMode;
+
+        // Direction / unit state
+        private bool _dirX = true;
+        private UnidadDisplay _unidad = UnidadDisplay.Cm;
 
         // Controls
         private DataGridView _gridParams = null!;
@@ -37,8 +58,18 @@ namespace App.WinForms.UserControls.Espectro
         private TrackBar _tbTmax = null!;
         private BindingSource _bsEspectro = null!;
         private PictureBox _pbSa = null!, _pbSv = null!, _pbSd = null!;
+        /// <summary>Base (unreduced) spectrum; also selected-direction display list.</summary>
         private IList<PuntoEspectro>? _ultimaLista;
+        /// <summary>Spectrum divided by R_x (cm-unit values).</summary>
+        private IList<PuntoEspectro>? _ultimaListaX;
+        /// <summary>Spectrum divided by R_y (cm-unit values).</summary>
+        private IList<PuntoEspectro>? _ultimaListaY;
         private SplitContainer _espectroSplit = null!;
+
+        // Direction / unit toolbar items
+        private ToolStripButton _btnDirX = null!;
+        private ToolStripButton _btnDirY = null!;
+        private ToolStripComboBox _cmbUnidad = null!;
 
         public EspectroUserControl()
         {
@@ -134,6 +165,28 @@ namespace App.WinForms.UserControls.Espectro
             btnRefreshEspectro.Click += (s, e) => { RefreshSpectrum(); AjustarAnchoPanelEspectro(); };
             _toolbar.Items.Add(new ToolStripControlHost(btnRefreshEspectro));
 
+            // ── X / Y direction switch ────────────────────────────────────────
+            _toolbar.Items.Add(new ToolStripSeparator());
+            _toolbar.Items.Add(new ToolStripLabel("Dirección:"));
+
+            _btnDirX = new ToolStripButton("X") { Checked = true, CheckOnClick = false, ToolTipText = "Mostrar espectro dirección X" };
+            _btnDirX.Click += (s, e) => SetDirection(true);
+            _toolbar.Items.Add(_btnDirX);
+
+            _btnDirY = new ToolStripButton("Y") { Checked = false, CheckOnClick = false, ToolTipText = "Mostrar espectro dirección Y" };
+            _btnDirY.Click += (s, e) => SetDirection(false);
+            _toolbar.Items.Add(_btnDirY);
+
+            // ── Unit selector ─────────────────────────────────────────────────
+            _toolbar.Items.Add(new ToolStripSeparator());
+            _toolbar.Items.Add(new ToolStripLabel("Unidades:"));
+
+            _cmbUnidad = new ToolStripComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130, ToolTipText = "Seleccionar sistema de unidades" };
+            _cmbUnidad.Items.AddRange(new object[] { "cm/s², cm/s, cm", "m/s², m/s, m", "g (fracción de gravedad)" });
+            _cmbUnidad.SelectedIndex = 0;
+            _cmbUnidad.SelectedIndexChanged += (s, e) => { _unidad = (UnidadDisplay)_cmbUnidad.SelectedIndex; ReconstruirColumnasYRefrescar(); };
+            _toolbar.Items.Add(_cmbUnidad);
+
             layout.Controls.Add(_toolbar, 0, 0);
 
             // ── Row 1: Parameter grid (horizontal) ───────────────────────────
@@ -180,11 +233,11 @@ namespace App.WinForms.UserControls.Espectro
             graphsPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 33f));
             _espectroSplit.Panel2.Controls.Add(graphsPanel);
 
-            _pbSa = CreateGraphBox("Pseudo Aceleración (cm/s²)", Color.RoyalBlue);
+            _pbSa = CreateGraphBox("Sa/R  (cm/s²)", Color.RoyalBlue);
             graphsPanel.Controls.Add(_pbSa, 0, 0);
-            _pbSv = CreateGraphBox("Pseudo Velocidad (cm/s)", Color.Firebrick);
+            _pbSv = CreateGraphBox("Sv/R  (cm/s)", Color.Firebrick);
             graphsPanel.Controls.Add(_pbSv, 0, 1);
-            _pbSd = CreateGraphBox("Pseudo Desplazamiento (cm)", Color.ForestGreen);
+            _pbSd = CreateGraphBox("Sd/R  (cm)", Color.ForestGreen);
             graphsPanel.Controls.Add(_pbSd, 0, 2);
 
             BuildColumnsEspectro();
@@ -214,9 +267,14 @@ namespace App.WinForms.UserControls.Espectro
             dict.TryGetValue("S", out double S);
             dict.TryGetValue("TP", out double TP);
             dict.TryGetValue("TL", out double TL);
+            dict.TryGetValue("R_x", out double Rx);
+            dict.TryGetValue("R_y", out double Ry);
+            if (Rx <= 0) Rx = 1.0;
+            if (Ry <= 0) Ry = 1.0;
 
             double ZUCS = Z * U * S;
-            var lista = new List<PuntoEspectro>();
+            var listaX = new List<PuntoEspectro>();
+            var listaY = new List<PuntoEspectro>();
             for (double p = 0.0; p <= Tmax + 1e-9; p += dt)
             {
                 double C = E030Tables.CalcularC(p, TP, TL);
@@ -228,15 +286,94 @@ namespace App.WinForms.UserControls.Espectro
                     Sv = Sa / w;
                     Sd = Sa / (w * w);
                 }
-                lista.Add(new PuntoEspectro { Periodo = p, C = C, Sa = Sa, Sv = Sv, Sd = Sd });
+                listaX.Add(new PuntoEspectro { Periodo = p, C = C, Sa = Sa / Rx, Sv = Sv / Rx, Sd = Sd / Rx });
+                listaY.Add(new PuntoEspectro { Periodo = p, C = C, Sa = Sa / Ry, Sv = Sv / Ry, Sd = Sd / Ry });
             }
 
-            _bsEspectro.DataSource = lista;
-            _ultimaLista = lista;
+            _ultimaListaX = listaX;
+            _ultimaListaY = listaY;
+            ActualizarTablaYGraficas();
+        }
+
+        /// <summary>
+        /// Refreshes the data table for the currently selected direction and repaints the charts.
+        /// </summary>
+        private void ActualizarTablaYGraficas()
+        {
+            _ultimaLista = _dirX ? _ultimaListaX : _ultimaListaY;
+            if (_ultimaLista != null)
+                _bsEspectro.DataSource = ConstruirListaDisplay(_ultimaLista);
             _pbSa?.Invalidate();
             _pbSv?.Invalidate();
             _pbSd?.Invalidate();
         }
+
+        /// <summary>Sets the active direction and updates the table and charts.</summary>
+        private void SetDirection(bool isX)
+        {
+            _dirX = isX;
+            _btnDirX.Checked = isX;
+            _btnDirY.Checked = !isX;
+            ActualizarTablaYGraficas();
+        }
+
+        /// <summary>
+        /// Rebuilds column headers with the current unit labels and refreshes the table.
+        /// </summary>
+        private void ReconstruirColumnasYRefrescar()
+        {
+            BuildColumnsEspectro();
+            ActualizarTablaYGraficas();
+            ActualizarTitulosGraficas();
+        }
+
+        /// <summary>
+        /// Updates chart title text to match the selected unit.
+        /// </summary>
+        private void ActualizarTitulosGraficas()
+        {
+            if (_pbSa != null) _pbSa.Tag = new Tuple<string, Color>($"Sa/R  ({GetSaUnitLabel()})", Color.RoyalBlue);
+            if (_pbSv != null) _pbSv.Tag = new Tuple<string, Color>($"Sv/R  ({GetSvUnitLabel()})", Color.Firebrick);
+            if (_pbSd != null) _pbSd.Tag = new Tuple<string, Color>($"Sd/R  ({GetSdUnitLabel()})", Color.ForestGreen);
+            _pbSa?.Invalidate();
+            _pbSv?.Invalidate();
+            _pbSd?.Invalidate();
+        }
+
+        // ── Unit label helpers ───────────────────────────────────────────────
+        private string GetSaUnitLabel() =>
+            _unidad == UnidadDisplay.M ? "m/s²" : _unidad == UnidadDisplay.G ? "g" : "cm/s²";
+
+        private string GetSvUnitLabel() => _unidad == UnidadDisplay.Cm ? "cm/s" : "m/s";
+
+        private string GetSdUnitLabel() => _unidad == UnidadDisplay.Cm ? "cm" : "m";
+
+        /// <summary>
+        /// Converts a list of cm-unit spectrum points to the currently selected display unit.
+        /// </summary>
+        private List<PuntoEspectro> ConstruirListaDisplay(IList<PuntoEspectro> source)
+        {
+            var result = new List<PuntoEspectro>(source.Count);
+            foreach (var p in source)
+            {
+                result.Add(new PuntoEspectro
+                {
+                    Periodo = p.Periodo,
+                    C = p.C,
+                    Sa = ConvertirSa(p.Sa),
+                    Sv = ConvertirSvSd(p.Sv),
+                    Sd = ConvertirSvSd(p.Sd)
+                });
+            }
+            return result;
+        }
+
+        private double ConvertirSa(double val) =>
+            _unidad == UnidadDisplay.M ? val / CmToM :
+            _unidad == UnidadDisplay.G ? val / CmS2ToG : val;
+
+        private double ConvertirSvSd(double val) =>
+            _unidad == UnidadDisplay.Cm ? val : val / CmToM;
 
         // ── Static spectrum generation (for external use) ───────────────────
         public static List<PuntoEspectro> GenerarEspectro(double ZUCS, double TP, double TL, double dt = 0.01)
@@ -273,32 +410,42 @@ namespace App.WinForms.UserControls.Espectro
 
         private void BuildColumnsEspectro()
         {
+            string saHdr = $"Sa/R ({GetSaUnitLabel()})";
+            string svHdr = $"Sv/R ({GetSvUnitLabel()})";
+            string sdHdr = $"Sd/R ({GetSdUnitLabel()})";
+
             _gridEspectro.Columns.Clear();
             var colT = new DataGridViewTextBoxColumn
             {
                 DataPropertyName = nameof(PuntoEspectro.Periodo),
-                HeaderText = "T", Width = 50,
+                HeaderText = "T (s)", Width = 55,
                 DefaultCellStyle = { Format = "F3" }
+            };
+            var colC = new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = nameof(PuntoEspectro.C),
+                HeaderText = "C", Width = 55,
+                DefaultCellStyle = { Format = "F4" }
             };
             var colSa = new DataGridViewTextBoxColumn
             {
                 DataPropertyName = nameof(PuntoEspectro.Sa),
-                HeaderText = "Sa (cm/s²)", Width = 80,
-                DefaultCellStyle = { Format = "F3" }
+                HeaderText = saHdr, Width = 95,
+                DefaultCellStyle = { Format = "F4" }
             };
             var colSv = new DataGridViewTextBoxColumn
             {
                 DataPropertyName = nameof(PuntoEspectro.Sv),
-                HeaderText = "Sv (cm/s)", Width = 80,
-                DefaultCellStyle = { Format = "F3" }
+                HeaderText = svHdr, Width = 90,
+                DefaultCellStyle = { Format = "F4" }
             };
             var colSd = new DataGridViewTextBoxColumn
             {
                 DataPropertyName = nameof(PuntoEspectro.Sd),
-                HeaderText = "Sd (cm)", Width = 80,
-                DefaultCellStyle = { Format = "F3" }
+                HeaderText = sdHdr, Width = 85,
+                DefaultCellStyle = { Format = "F5" }
             };
-            _gridEspectro.Columns.AddRange(new DataGridViewColumn[] { colT, colSa, colSv, colSd });
+            _gridEspectro.Columns.AddRange(new DataGridViewColumn[] { colT, colC, colSa, colSv, colSd });
             _gridEspectro.DataSource = _bsEspectro;
         }
 
@@ -424,62 +571,119 @@ namespace App.WinForms.UserControls.Espectro
             var info = (Tuple<string, Color>)pb.Tag;
             g.Clear(Color.White);
 
-            using (var fontTitle = new Font("Segoe UI", 8f))
-            using (var brush = new SolidBrush(Color.Black))
+            using (var fontTitle = new Font("Segoe UI", 8f, FontStyle.Bold))
+            using (var brush = new SolidBrush(Color.FromArgb(50, 50, 80)))
                 g.DrawString(info.Item1, fontTitle, brush, new PointF(4, 4));
 
-            if (_ultimaLista == null || _ultimaLista.Count == 0) return;
+            if ((_ultimaListaX == null || _ultimaListaX.Count == 0) &&
+                (_ultimaListaY == null || _ultimaListaY.Count == 0)) return;
 
-            Func<PuntoEspectro, double> selector;
-            if (pb == _pbSa) selector = x => x.Sa;
-            else if (pb == _pbSv) selector = x => x.Sv;
-            else selector = x => x.Sd;
+            // Selector (raw cm values): convert during paint via factor
+            Func<PuntoEspectro, double> rawSel;
+            double convFactor;
+            if (pb == _pbSa)
+            {
+                rawSel = x => x.Sa;
+                convFactor = _unidad == UnidadDisplay.M ? 1.0 / CmToM :
+                             _unidad == UnidadDisplay.G ? 1.0 / CmS2ToG : 1.0;
+            }
+            else if (pb == _pbSv)
+            {
+                rawSel = x => x.Sv;
+                convFactor = _unidad == UnidadDisplay.Cm ? 1.0 : 1.0 / CmToM;
+            }
+            else
+            {
+                rawSel = x => x.Sd;
+                convFactor = _unidad == UnidadDisplay.Cm ? 1.0 : 1.0 / CmToM;
+            }
 
-            double maxY = _ultimaLista.Select(selector).DefaultIfEmpty(0.0).Max();
+            Func<PuntoEspectro, double> sel = p => rawSel(p) * convFactor;
+
+            // Determine joint max over both curves for consistent Y-axis scale
+            double maxY = 0;
+            if (_ultimaListaX != null) maxY = Math.Max(maxY, _ultimaListaX.Select(sel).DefaultIfEmpty(0.0).Max());
+            if (_ultimaListaY != null) maxY = Math.Max(maxY, _ultimaListaY.Select(sel).DefaultIfEmpty(0.0).Max());
             if (maxY <= 0.0) return;
 
+            double maxT = 0;
+            if (_ultimaListaX != null) maxT = Math.Max(maxT, _ultimaListaX.Select(x => x.Periodo).DefaultIfEmpty(0.0).Max());
+            if (_ultimaListaY != null) maxT = Math.Max(maxT, _ultimaListaY.Select(x => x.Periodo).DefaultIfEmpty(0.0).Max());
+            if (maxT <= 0.0) return;
+
             var rect = pb.ClientRectangle;
-            var plotRect = new Rectangle(50, 20, rect.Width - 60, rect.Height - 40);
+            var plotRect = new Rectangle(52, 22, Math.Max(rect.Width - 65, 20), Math.Max(rect.Height - 44, 20));
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            int segundos = (int)Math.Ceiling(_ultimaLista.Select(x => x.Periodo).DefaultIfEmpty(0.0).Max());
+            int segundos = (int)Math.Ceiling(maxT);
+            if (segundos < 1) segundos = 1;
             int yDivs = 5;
 
             using (var gridPen = new Pen(Color.Gainsboro, 1))
-            using (var axisPen = new Pen(Color.Black, 1))
-            using (var fontAxis = new Font("Segoe UI", 7f))
-            using (var brushAxis = new SolidBrush(Color.Black))
+            using (var axisPen = new Pen(Color.FromArgb(60, 60, 80), 1.5f))
+            using (var fontAxis = new Font("Segoe UI", 6.5f))
+            using (var brushAxis = new SolidBrush(Color.FromArgb(60, 60, 80)))
             {
                 for (int s = 0; s <= segundos; s++)
                 {
                     float x = (float)(plotRect.Left + (s / (double)segundos) * plotRect.Width);
                     g.DrawLine(gridPen, x, plotRect.Top, x, plotRect.Bottom);
-                    g.DrawString(s.ToString(), fontAxis, brushAxis, new PointF(x - 8, plotRect.Bottom + 2));
+                    g.DrawString(s.ToString(), fontAxis, brushAxis, new PointF(x - 6, plotRect.Bottom + 2));
                 }
                 for (int i = 0; i <= yDivs; i++)
                 {
                     double val = maxY * i / yDivs;
                     float y = (float)(plotRect.Bottom - (val / maxY) * plotRect.Height);
                     g.DrawLine(gridPen, plotRect.Left, y, plotRect.Right, y);
-                    g.DrawString(val.ToString("G4"), fontAxis, brushAxis, new PointF(2, y - 6));
+                    g.DrawString(val.ToString("G4"), fontAxis, brushAxis, new PointF(1, y - 7));
                 }
                 g.DrawLine(axisPen, plotRect.Left, plotRect.Bottom, plotRect.Right, plotRect.Bottom);
                 g.DrawLine(axisPen, plotRect.Left, plotRect.Bottom, plotRect.Left, plotRect.Top);
             }
 
-            using (var pen = new Pen(info.Item2, 1.6f))
+            // Draw Y-direction curve (orange, dashed) behind X
+            if (_ultimaListaY != null && _ultimaListaY.Count >= 2)
             {
+                using var penY = new Pen(Color.DarkOrange, 1.5f) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
                 PointF? prev = null;
-                double maxT = _ultimaLista.Select(x => x.Periodo).DefaultIfEmpty(0.0).Max();
-                if (maxT <= 0.0) return;
-                foreach (var p in _ultimaLista)
+                foreach (var p in _ultimaListaY)
                 {
                     float x = (float)(plotRect.Left + (p.Periodo / maxT) * plotRect.Width);
-                    float y = (float)(plotRect.Bottom - (selector(p) / maxY) * plotRect.Height);
+                    float y = (float)(plotRect.Bottom - (sel(p) / maxY) * plotRect.Height);
                     var pt = new PointF(x, y);
-                    if (prev != null) g.DrawLine(pen, prev.Value, pt);
+                    if (prev != null) g.DrawLine(penY, prev.Value, pt);
                     prev = pt;
                 }
+            }
+
+            // Draw X-direction curve (primary color, solid) on top
+            if (_ultimaListaX != null && _ultimaListaX.Count >= 2)
+            {
+                using var penX = new Pen(info.Item2, 1.8f);
+                PointF? prev = null;
+                foreach (var p in _ultimaListaX)
+                {
+                    float x = (float)(plotRect.Left + (p.Periodo / maxT) * plotRect.Width);
+                    float y = (float)(plotRect.Bottom - (sel(p) / maxY) * plotRect.Height);
+                    var pt = new PointF(x, y);
+                    if (prev != null) g.DrawLine(penX, prev.Value, pt);
+                    prev = pt;
+                }
+            }
+
+            // Legend (top-right)
+            using (var fontLeg = new Font("Segoe UI", 7f))
+            using (var brushLeg = new SolidBrush(Color.FromArgb(50, 50, 80)))
+            {
+                int lx = plotRect.Right - 58;
+                int ly = plotRect.Top + 4;
+                g.FillRectangle(new SolidBrush(Color.FromArgb(230, Color.White)), lx - 2, ly - 2, 60, 30);
+                using var penX2 = new Pen(info.Item2, 2f);
+                g.DrawLine(penX2, lx, ly + 6, lx + 16, ly + 6);
+                g.DrawString("X", fontLeg, brushLeg, lx + 18, ly + 1);
+                using var penY2 = new Pen(Color.DarkOrange, 2f) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
+                g.DrawLine(penY2, lx, ly + 20, lx + 16, ly + 20);
+                g.DrawString("Y", fontLeg, brushLeg, lx + 18, ly + 15);
             }
         }
 
