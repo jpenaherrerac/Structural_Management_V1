@@ -45,10 +45,11 @@ namespace App.Application.UseCases
             {
                 double driftYValue = 0;
                 double dispY = 0;
+                // When querying Y load case, the adapter returns Y-direction data in DriftY
                 if (yLookup.TryGetValue(dx.StoryName, out var dy))
                 {
-                    driftYValue = dy.DriftX; // DriftX from the Y load case is the Y-direction drift
-                    dispY = dy.DisplacementX;
+                    driftYValue = dy.DriftY;
+                    dispY = dy.DisplacementY;
                 }
 
                 var result = new DriftResult(dx.StoryName, parameters.LoadCaseX, dx.DriftX, driftYValue)

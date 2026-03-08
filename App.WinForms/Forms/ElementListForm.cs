@@ -256,9 +256,10 @@ namespace App.WinForms.Forms
 
         private static string ExtractStory(string groupName)
         {
-            // "Vigas_P3" → "P3"
+            // "Vigas_P3" → "P3", "Muros_2_P1" → "P1" (always take last segment)
+            if (string.IsNullOrEmpty(groupName)) return groupName;
             int idx = groupName.LastIndexOf('_');
-            return idx >= 0 ? groupName.Substring(idx + 1) : groupName;
+            return idx >= 0 && idx < groupName.Length - 1 ? groupName.Substring(idx + 1) : groupName;
         }
 
         // ─── Row DTO ────────────────────────────────────────────────────────────
