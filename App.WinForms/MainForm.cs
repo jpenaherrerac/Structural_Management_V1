@@ -2,6 +2,8 @@ using System;
 using System.Windows.Forms;
 using App.Application.Interfaces;
 using App.Application.UseCases;
+using App.Domain.Entities.Elements;
+using App.Domain.Enums;
 
 namespace App.WinForms
 {
@@ -16,6 +18,10 @@ namespace App.WinForms
         private StatusStrip _statusStrip;
         private ToolStripStatusLabel _statusLabel;
         private ToolStripStatusLabel _sapStatusLabel;
+
+        // Shared state for group prefixes (editable via Definir → Grupos)
+        private GroupPrefixConfiguration _groupPrefixes = new GroupPrefixConfiguration();
+        private int _floorCount = 5;
 
         public MainForm(
             ISapAdapter sapAdapter,
@@ -232,6 +238,48 @@ namespace App.WinForms
                 return false;
             }
             return true;
+        }
+
+        // ─── Definir menu ───────────────────────────────────────────────────────
+        private void menuGrupos_Click(object sender, EventArgs e)
+        {
+            using var dlg = new Forms.GroupPrefixDialog(_groupPrefixes);
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                _groupPrefixes = dlg.ResultConfiguration;
+                _statusLabel.Text = $"Prefijos actualizados: Vigas={_groupPrefixes.BeamPrefix}, Columnas={_groupPrefixes.ColumnPrefix}";
+            }
+        }
+
+        private void menuVigas_Click(object sender, EventArgs e)
+        {
+            var frm = new Forms.ElementListForm(_sapAdapter, ElementType.Beam, _groupPrefixes.BeamPrefix, _floorCount);
+            frm.Show(this);
+        }
+
+        private void menuColumnas_Click(object sender, EventArgs e)
+        {
+            var frm = new Forms.ElementListForm(_sapAdapter, ElementType.Column, _groupPrefixes.ColumnPrefix, _floorCount);
+            frm.Show(this);
+        }
+
+        private void menuMuros_Click(object sender, EventArgs e)
+        {
+            var frm = new Forms.ElementListForm(_sapAdapter, ElementType.ShearWall, _groupPrefixes.ShearWallPrefix, _floorCount);
+            frm.Show(this);
+        }
+
+        private void menuLosas_Click(object sender, EventArgs e)
+        {
+            var frm = new Forms.ElementListForm(_sapAdapter, ElementType.Slab, _groupPrefixes.SlabPrefix, _floorCount);
+            frm.Show(this);
+        }
+
+        // ─── Análisis menu ──────────────────────────────────────────────────────
+        private void menuResultadosSismicos_Click(object sender, EventArgs e)
+        {
+            var frm = new Forms.SeismicResultsForm(_sapAdapter);
+            frm.Show(this);
         }
     }
 }

@@ -69,16 +69,24 @@ namespace App.WinForms
             menuObtener.DropDownItems.Add(itemObtenerSismico);
             menuObtener.DropDownItems.Add(itemObtenerDiseno);
 
-            // Análisis (placeholder)
+            // Análisis
             var menuAnalisis = new ToolStripMenuItem("&Análisis");
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Resultados Sísmicos... (próximamente)"));
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Derivas... (próximamente)"));
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Modos... (próximamente)"));
+            var itemResultadosSismicos = new ToolStripMenuItem("Ver Resultados &Sísmicos...", null, menuResultadosSismicos_Click);
+            menuAnalisis.DropDownItems.Add(itemResultadosSismicos);
 
-            // Definir (placeholder)
+            // Definir
             var menuDefinir = new ToolStripMenuItem("&Definir");
-            menuDefinir.DropDownItems.Add(new ToolStripMenuItem("Elementos Estructurales... (próximamente)"));
-            menuDefinir.DropDownItems.Add(new ToolStripMenuItem("Combinaciones de Carga... (próximamente)"));
+            var itemGrupos = new ToolStripMenuItem("&Grupos (Prefijos)...", null, menuGrupos_Click);
+            menuDefinir.DropDownItems.Add(itemGrupos);
+            menuDefinir.DropDownItems.Add(new ToolStripSeparator());
+            var itemVigas = new ToolStripMenuItem("&Vigas...", null, menuVigas_Click);
+            var itemColumnas = new ToolStripMenuItem("&Columnas...", null, menuColumnas_Click);
+            var itemMuros = new ToolStripMenuItem("&Muros de Corte...", null, menuMuros_Click);
+            var itemLosas = new ToolStripMenuItem("&Losas...", null, menuLosas_Click);
+            menuDefinir.DropDownItems.Add(itemVigas);
+            menuDefinir.DropDownItems.Add(itemColumnas);
+            menuDefinir.DropDownItems.Add(itemMuros);
+            menuDefinir.DropDownItems.Add(itemLosas);
 
             menuBar.Items.Add(menuArchivo);
             menuBar.Items.Add(menuConectar);
