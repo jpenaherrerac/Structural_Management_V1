@@ -46,9 +46,10 @@ namespace App.WinForms
             menuConectar.DropDownItems.Add(new ToolStripSeparator());
             menuConectar.DropDownItems.Add(itemCambiarSesion);
 
-            // Cargas (placeholder)
+            // Cargas
             var menuCargas = new ToolStripMenuItem("Cargas");
-            menuCargas.DropDownItems.Add(new ToolStripMenuItem("Configurar Cargas... (próximamente)"));
+            var itemConfigurarCargas = new ToolStripMenuItem("&Configurar Cargas...", null, menuConfigurarCargas_Click);
+            menuCargas.DropDownItems.Add(itemConfigurarCargas);
 
             // Sismicidad
             var menuSismicidad = new ToolStripMenuItem("&Sismicidad");
@@ -64,7 +65,7 @@ namespace App.WinForms
 
             // Obtener
             var menuObtener = new ToolStripMenuItem("&Obtener");
-            var itemObtenerSismico = new ToolStripMenuItem("Obtener Datos &Sísmicos", null, menuObtenerSismico_Click);
+            var itemObtenerSismico = new ToolStripMenuItem("Obtener Datos &Sísmicos", null, menuObtenerSismico_Advanced_Click);
             var itemObtenerDiseno = new ToolStripMenuItem("Obtener Datos de &Diseño", null, menuObtenerDiseno_Click);
             menuObtener.DropDownItems.Add(itemObtenerSismico);
             menuObtener.DropDownItems.Add(itemObtenerDiseno);
@@ -110,6 +111,12 @@ namespace App.WinForms
             };
             _statusStrip.Items.Add(_statusLabel);
             _statusStrip.Items.Add(new ToolStripSeparator());
+            _iterationLabel = new ToolStripStatusLabel("Iteración: 1 | Inicio")
+            {
+                ForeColor = System.Drawing.Color.FromArgb(60, 90, 140)
+            };
+            _statusStrip.Items.Add(_iterationLabel);
+            _statusStrip.Items.Add(new ToolStripSeparator());
             _statusStrip.Items.Add(_sapStatusLabel);
 
             // ── Panel de bienvenida ──────────────────────────────────────────────
@@ -139,13 +146,16 @@ namespace App.WinForms
 
             var lblInstructions = new Label
             {
-                Text = "Comenzar:\n" +
+                Text = "Flujo de trabajo iterativo:\n" +
                        "  1. Archivo → Nuevo Proyecto  (crear un proyecto)\n" +
                        "  2. Conectar → Conectar a SAP2000  (abrir SAP2000)\n" +
                        "  3. Archivo → Abrir Modelo SAP  (cargar un modelo .sdb)\n" +
-                       "  4. Sismicidad → Parámetros Sísmicos  (configurar NEC/E030)\n" +
-                       "  5. Run → Run Análisis  (ejecutar análisis)\n" +
-                       "  6. Obtener → Obtener Datos Sísmicos  (extraer resultados)",
+                       "  4. Sismicidad → Parámetros Sísmicos  (configurar E030)\n" +
+                       "  5. Cargas → Configurar Cargas  (aplicar al modelo SAP2000)\n" +
+                       "  6. Run → Run Análisis  (ejecutar análisis)\n" +
+                       "  7. Obtener → Obtener Datos Sísmicos  (extraer resultados)\n" +
+                       "  8. Análisis → Ver Resultados Sísmicos  (evaluar criterios)\n" +
+                       "  9. Ajustar parámetros y repetir desde paso 4 si es necesario",
                 Font = new System.Drawing.Font("Segoe UI", 10F),
                 ForeColor = System.Drawing.Color.FromArgb(50, 70, 90),
                 Location = new System.Drawing.Point(40, 200),
