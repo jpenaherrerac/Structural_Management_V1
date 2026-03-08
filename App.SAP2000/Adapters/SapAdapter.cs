@@ -8,20 +8,26 @@ using App.Domain.Entities.Seismic;
 namespace App.SAP2000.Adapters
 {
     /// <summary>
-    /// Implements ISapAdapter by delegating to SapConnectionService and SAP2000 COM API.
-    /// The actual SAP2000 API calls are isolated here so other projects have no API dependency.
+    /// Implements ISapAdapter by delegating to SapConnectionService, SapModelFacade,
+    /// and the static readers.  The actual SAP2000 API calls are isolated here so
+    /// other projects have no API dependency.
     /// </summary>
     public class SapAdapter : ISapAdapter
     {
         private readonly SapConnectionService _connectionService;
+        private readonly SapModelFacade _facade;
         private SapSession? _currentSession;
 
         public bool IsConnected => _connectionService.IsConnected;
+        public ISapConnectionManager ConnectionManager => _connectionService;
 
         public SapAdapter()
         {
             _connectionService = new SapConnectionService();
+            _facade = new SapModelFacade(_connectionService);
         }
+
+        // ── Connection ──────────────────────────────────────────────────────────
 
         public SapSession Connect(string sapProgramPath, bool attachToExisting = false)
         {
@@ -32,10 +38,12 @@ namespace App.SAP2000.Adapters
         public void Disconnect()
         {
             _connectionService.Disconnect();
-            _currentSession?.Disconnect();
+            _currentSession = null;
         }
 
         public string GetSapVersion() => _connectionService.GetSapVersion();
+
+        // ── Model I/O ───────────────────────────────────────────────────────────
 
         public bool OpenModel(string modelFilePath) =>
             _connectionService.OpenModel(modelFilePath);
@@ -50,6 +58,8 @@ namespace App.SAP2000.Adapters
 
         public bool UnlockModel() => _connectionService.SetModelLocked(false);
 
+        // ── Element queries ─────────────────────────────────────────────────────
+
         public IEnumerable<string> GetStoryNames() =>
             _connectionService.GetStoryNames();
 
@@ -58,6 +68,22 @@ namespace App.SAP2000.Adapters
 
         public IEnumerable<string> GetAreaElementIds() =>
             _connectionService.GetAreaElementIds();
+
+        // ── Group queries ───────────────────────────────────────────────────────
+
+        public IEnumerable<string> GetGroupNames() =>
+            _connectionService.GetGroupNames();
+
+        public IEnumerable<string> GetGroupElements(string groupName) =>
+            _connectionService.GetGroupElements(groupName);
+
+        public IEnumerable<string> GetSelectedFrameIds() =>
+            _connectionService.GetSelectedFrameIds();
+
+        public IEnumerable<string> GetSelectedAreaIds() =>
+            _connectionService.GetSelectedAreaIds();
+
+        // ── Definitions ─────────────────────────────────────────────────────────
 
         public bool DefineLoadPattern(string name, string patternType, double selfWeightMultiplier) =>
             _connectionService.DefineLoadPattern(name, patternType, selfWeightMultiplier);
@@ -78,6 +104,14 @@ namespace App.SAP2000.Adapters
 
         public bool AssignDiaphragm(string storyName, string diaphragmName, bool isRigid) =>
             _connectionService.AssignDiaphragm(storyName, diaphragmName, isRigid);
+
+        public bool DefineDiaphragmConstraint(string diaphragmName) =>
+            _connectionService.DefineDiaphragmConstraint(diaphragmName);
+
+        public bool AssignPointConstraint(string pointName, string constraintName) =>
+            _connectionService.AssignPointConstraint(pointName, constraintName);
+
+        // ── Results ─────────────────────────────────────────────────────────────
 
         public BaseShearSummary GetBaseShear(string loadCase) =>
             SapStructureOutputReader.ReadBaseShear(_connectionService, loadCase);

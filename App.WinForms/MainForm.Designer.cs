@@ -38,10 +38,13 @@ namespace App.WinForms
 
             // Conectar
             var menuConectar = new ToolStripMenuItem("&Conectar");
-            var itemConectar = new ToolStripMenuItem("Conectar a SAP2000", null, menuConectarSAP_Click);
+            var itemConectar = new ToolStripMenuItem("Conectar a SAP2000...", null, menuConectarSAP_Click);
             var itemDesconectar = new ToolStripMenuItem("Desconectar SAP2000", null, menuDesconectarSAP_Click);
+            var itemCambiarSesion = new ToolStripMenuItem("Cambiar sesión SAP2000...", null, menuCambiarSesionSAP_Click);
             menuConectar.DropDownItems.Add(itemConectar);
             menuConectar.DropDownItems.Add(itemDesconectar);
+            menuConectar.DropDownItems.Add(new ToolStripSeparator());
+            menuConectar.DropDownItems.Add(itemCambiarSesion);
 
             // Cargas (placeholder)
             var menuCargas = new ToolStripMenuItem("Cargas");

@@ -97,17 +97,18 @@ namespace App.WinForms
         {
             try
             {
-                Cursor = Cursors.WaitCursor;
-                _sapAdapter.Connect(string.Empty, attachToExisting: true);
-                UpdateSapStatus();
-                _statusLabel.Text = $"Conectado a SAP2000 versión {_sapAdapter.GetSapVersion()}";
+                using var dlg = new Forms.SapSessionDialog(_sapAdapter.ConnectionManager);
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ResultSession != null)
+                {
+                    UpdateSapStatus();
+                    _statusLabel.Text = $"Conectado a SAP2000 versión {_sapAdapter.GetSapVersion()}";
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al conectar: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            finally { Cursor = Cursors.Default; }
         }
 
         private void menuDesconectarSAP_Click(object sender, EventArgs e)
@@ -115,6 +116,24 @@ namespace App.WinForms
             _sapAdapter.Disconnect();
             UpdateSapStatus();
             _statusLabel.Text = "Desconectado de SAP2000.";
+        }
+
+        private void menuCambiarSesionSAP_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using var dlg = new Forms.SapSessionDialog(_sapAdapter.ConnectionManager);
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ResultSession != null)
+                {
+                    UpdateSapStatus();
+                    _statusLabel.Text = $"Sesión cambiada – SAP2000 versión {_sapAdapter.GetSapVersion()}";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cambiar sesión: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         // ─── Sismicidad menu ────────────────────────────────────────────────────
