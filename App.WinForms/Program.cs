@@ -25,8 +25,9 @@ namespace App.WinForms
             var createProjectUseCase = new CreateProjectUseCase(projectRepo);
             var hydrateSeismicUseCase = new HydrateSeismicSourceUseCase(sapAdapter, seismicRepo, projectRepo);
             var hydrateDesignUseCase = new HydrateDesignSourceUseCase(sapAdapter, designRepo, projectRepo);
+            var applyConfigUseCase = new ApplySeismicConfigurationUseCase(sapAdapter, projectRepo);
 
-            WinFormsApp.Run(new MainForm(sapAdapter, createProjectUseCase, hydrateSeismicUseCase, hydrateDesignUseCase));
+            WinFormsApp.Run(new MainForm(sapAdapter, createProjectUseCase, hydrateSeismicUseCase, hydrateDesignUseCase, applyConfigUseCase));
         }
     }
 }

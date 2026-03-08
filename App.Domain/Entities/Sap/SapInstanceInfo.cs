@@ -11,8 +11,17 @@ namespace App.Domain.Entities.Sap
         public bool IsNewInstance { get; set; }
         public bool IsVisible { get; set; }
         public DateTime LaunchedAt { get; set; }
+        public string WindowTitle { get; set; }
 
-        public SapInstanceInfo() { }
+        /// <summary>
+        /// Human-readable label for UI display (e.g. "SAP2000 – Model1.sdb [PID 1234]").
+        /// </summary>
+        public string DisplayName =>
+            string.IsNullOrWhiteSpace(WindowTitle)
+                ? $"SAP2000 [PID {ProcessId}]"
+                : $"{WindowTitle} [PID {ProcessId}]";
+
+        public SapInstanceInfo() { WindowTitle = string.Empty; }
 
         public SapInstanceInfo(string programPath, string modelFilePath, int processId, string sapVersion)
         {
@@ -21,6 +30,7 @@ namespace App.Domain.Entities.Sap
             ProcessId = processId;
             SapVersion = sapVersion ?? string.Empty;
             LaunchedAt = DateTime.UtcNow;
+            WindowTitle = string.Empty;
         }
     }
 }

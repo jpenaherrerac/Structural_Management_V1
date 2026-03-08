@@ -38,14 +38,18 @@ namespace App.WinForms
 
             // Conectar
             var menuConectar = new ToolStripMenuItem("&Conectar");
-            var itemConectar = new ToolStripMenuItem("Conectar a SAP2000", null, menuConectarSAP_Click);
+            var itemConectar = new ToolStripMenuItem("Conectar a SAP2000...", null, menuConectarSAP_Click);
             var itemDesconectar = new ToolStripMenuItem("Desconectar SAP2000", null, menuDesconectarSAP_Click);
+            var itemCambiarSesion = new ToolStripMenuItem("Cambiar sesión SAP2000...", null, menuCambiarSesionSAP_Click);
             menuConectar.DropDownItems.Add(itemConectar);
             menuConectar.DropDownItems.Add(itemDesconectar);
+            menuConectar.DropDownItems.Add(new ToolStripSeparator());
+            menuConectar.DropDownItems.Add(itemCambiarSesion);
 
-            // Cargas (placeholder)
+            // Cargas
             var menuCargas = new ToolStripMenuItem("Cargas");
-            menuCargas.DropDownItems.Add(new ToolStripMenuItem("Configurar Cargas... (próximamente)"));
+            var itemConfigurarCargas = new ToolStripMenuItem("&Configurar Cargas...", null, menuConfigurarCargas_Click);
+            menuCargas.DropDownItems.Add(itemConfigurarCargas);
 
             // Sismicidad
             var menuSismicidad = new ToolStripMenuItem("&Sismicidad");
@@ -61,21 +65,29 @@ namespace App.WinForms
 
             // Obtener
             var menuObtener = new ToolStripMenuItem("&Obtener");
-            var itemObtenerSismico = new ToolStripMenuItem("Obtener Datos &Sísmicos", null, menuObtenerSismico_Click);
+            var itemObtenerSismico = new ToolStripMenuItem("Obtener Datos &Sísmicos", null, menuObtenerSismico_Advanced_Click);
             var itemObtenerDiseno = new ToolStripMenuItem("Obtener Datos de &Diseño", null, menuObtenerDiseno_Click);
             menuObtener.DropDownItems.Add(itemObtenerSismico);
             menuObtener.DropDownItems.Add(itemObtenerDiseno);
 
-            // Análisis (placeholder)
+            // Análisis
             var menuAnalisis = new ToolStripMenuItem("&Análisis");
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Resultados Sísmicos... (próximamente)"));
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Derivas... (próximamente)"));
-            menuAnalisis.DropDownItems.Add(new ToolStripMenuItem("Ver Modos... (próximamente)"));
+            var itemResultadosSismicos = new ToolStripMenuItem("Ver Resultados &Sísmicos...", null, menuResultadosSismicos_Click);
+            menuAnalisis.DropDownItems.Add(itemResultadosSismicos);
 
-            // Definir (placeholder)
+            // Definir
             var menuDefinir = new ToolStripMenuItem("&Definir");
-            menuDefinir.DropDownItems.Add(new ToolStripMenuItem("Elementos Estructurales... (próximamente)"));
-            menuDefinir.DropDownItems.Add(new ToolStripMenuItem("Combinaciones de Carga... (próximamente)"));
+            var itemGrupos = new ToolStripMenuItem("&Grupos (Prefijos)...", null, menuGrupos_Click);
+            menuDefinir.DropDownItems.Add(itemGrupos);
+            menuDefinir.DropDownItems.Add(new ToolStripSeparator());
+            var itemVigas = new ToolStripMenuItem("&Vigas...", null, menuVigas_Click);
+            var itemColumnas = new ToolStripMenuItem("&Columnas...", null, menuColumnas_Click);
+            var itemMuros = new ToolStripMenuItem("&Muros de Corte...", null, menuMuros_Click);
+            var itemLosas = new ToolStripMenuItem("&Losas...", null, menuLosas_Click);
+            menuDefinir.DropDownItems.Add(itemVigas);
+            menuDefinir.DropDownItems.Add(itemColumnas);
+            menuDefinir.DropDownItems.Add(itemMuros);
+            menuDefinir.DropDownItems.Add(itemLosas);
 
             menuBar.Items.Add(menuArchivo);
             menuBar.Items.Add(menuConectar);
@@ -98,6 +110,12 @@ namespace App.WinForms
                 ForeColor = System.Drawing.Color.Red
             };
             _statusStrip.Items.Add(_statusLabel);
+            _statusStrip.Items.Add(new ToolStripSeparator());
+            _iterationLabel = new ToolStripStatusLabel("Iteración: 1 | Inicio")
+            {
+                ForeColor = System.Drawing.Color.FromArgb(60, 90, 140)
+            };
+            _statusStrip.Items.Add(_iterationLabel);
             _statusStrip.Items.Add(new ToolStripSeparator());
             _statusStrip.Items.Add(_sapStatusLabel);
 
@@ -128,13 +146,16 @@ namespace App.WinForms
 
             var lblInstructions = new Label
             {
-                Text = "Comenzar:\n" +
+                Text = "Flujo de trabajo iterativo:\n" +
                        "  1. Archivo → Nuevo Proyecto  (crear un proyecto)\n" +
                        "  2. Conectar → Conectar a SAP2000  (abrir SAP2000)\n" +
                        "  3. Archivo → Abrir Modelo SAP  (cargar un modelo .sdb)\n" +
-                       "  4. Sismicidad → Parámetros Sísmicos  (configurar NEC/E030)\n" +
-                       "  5. Run → Run Análisis  (ejecutar análisis)\n" +
-                       "  6. Obtener → Obtener Datos Sísmicos  (extraer resultados)",
+                       "  4. Sismicidad → Parámetros Sísmicos  (configurar E030)\n" +
+                       "  5. Cargas → Configurar Cargas  (aplicar al modelo SAP2000)\n" +
+                       "  6. Run → Run Análisis  (ejecutar análisis)\n" +
+                       "  7. Obtener → Obtener Datos Sísmicos  (extraer resultados)\n" +
+                       "  8. Análisis → Ver Resultados Sísmicos  (evaluar criterios)\n" +
+                       "  9. Ajustar parámetros y repetir desde paso 4 si es necesario",
                 Font = new System.Drawing.Font("Segoe UI", 10F),
                 ForeColor = System.Drawing.Color.FromArgb(50, 70, 90),
                 Location = new System.Drawing.Point(40, 200),
