@@ -160,8 +160,15 @@ namespace App.SAP2000.Adapters
                 int pid = 0;
                 try
                 {
-                    var procs = Process.GetProcessesByName("SAP2000").OrderByDescending(p => p.StartTime);
-                    pid = procs.FirstOrDefault()?.Id ?? 0;
+                    var procs = Process.GetProcessesByName("SAP2000");
+                    foreach (var p in procs)
+                    {
+                        try
+                        {
+                            if (!p.HasExited) { pid = p.Id; break; }
+                        }
+                        catch { }
+                    }
                 }
                 catch { }
 
@@ -512,7 +519,7 @@ namespace App.SAP2000.Adapters
         public bool AssignPointConstraint(string pointName, string constraintName)
         {
             if (_sapModel == null) return true;
-            try { return _sapModel.PointObj.SetConstraint(pointName, constraintName) == 0; }
+            try { return _sapModel.PointObj.SetConstraint(pointName, constraintName, 0) == 0; }
             catch { return false; }
         }
 

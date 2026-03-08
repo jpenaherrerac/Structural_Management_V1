@@ -259,10 +259,12 @@ namespace App.SAP2000.Adapters
             }
             try
             {
+                // Set up results for the section cut name
+                Model.Results.Setup.DeselectAllCasesAndCombosForOutput();
                 string[] loadCases = null, stepTypes = null;
                 double[] stepNums = null;
                 double[] _f1 = null, _f2 = null, _f3 = null, _m1 = null, _m2 = null, _m3 = null;
-                int ret = Model.Results.SectionCutAnalysis(
+                int ret = Model.Results.SectionCutAnalysis(sectionCutName,
                     ref numResults, ref loadCases, ref stepTypes, ref stepNums,
                     ref _f1, ref _f2, ref _f3, ref _m1, ref _m2, ref _m3);
                 if (ret == 0 && _f1 != null)
