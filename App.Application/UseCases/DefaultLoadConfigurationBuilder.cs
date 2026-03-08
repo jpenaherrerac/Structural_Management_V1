@@ -161,8 +161,9 @@ namespace App.Application.UseCases
         }
 
         /// <summary>
-        /// Spectral acceleration per E.030-2018: Sa = ZUCS/R
-        /// where C depends on T, TP, TL.
+        /// Spectral acceleration for the response spectrum function per E.030-2018.
+        /// Sa = Z × U × C × S (without R — the reduction factor is applied
+        /// separately in the load-case scale factor within SAP2000).
         /// </summary>
         private static double ComputeSa(double T, double Z, double U, double S, double TP, double TL)
         {

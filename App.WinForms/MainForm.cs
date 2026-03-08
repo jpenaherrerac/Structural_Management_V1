@@ -173,7 +173,7 @@ namespace App.WinForms
             {
                 _currentSeismicValues = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
                 foreach (var kv in vals) _currentSeismicValues[kv.Key] = kv.Value;
-                _statusLabel.Text = $"Parámetros sísmicos actualizados (R_x={GetVal("R_x", 0):G4}, R_y={GetVal("R_y", 0):G4}).";
+                _statusLabel.Text = $"Parámetros sísmicos actualizados (Ro_x={GetVal("Ro_x", 0):G4}, Ro_y={GetVal("Ro_y", 0):G4}).";
             }
         }
 
@@ -300,6 +300,8 @@ namespace App.WinForms
             // Build or update SeismicConfiguration
             if (_seismicConfig == null)
                 _seismicConfig = new SeismicConfiguration(_activeProjectId!.Value);
+            else if (_lastIteration != null && _lastIteration.CurrentPhase >= IterationPhase.ResultsExtracted)
+                AdvanceIteration(); // Start new iteration when re-applying after results
 
             _seismicConfig.ZoneFactor = GetVal("Z", 0.45);
             _seismicConfig.SoilAmplificationFactor = GetVal("S", 1.0);
